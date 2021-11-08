@@ -33,3 +33,46 @@ public void test() {
 }
 ```
 
+
+
+
+
+### Spring Data는 entity를 가져올 때 기본 생성자를 사용하므로 기본 생성자는 필수이다.
+
+- 아닐 경우 다음과 같은 오류가 발생한다
+  - `No default constructor for entity`
+
+
+
+
+
+### open-feign은 patch를 지원하지 않는다.
+
+- 사용하면 `java.net.ProtocolException: Invalid HTTP method: PATCH` 오류 발생
+
+- 컴스텀한 다른 코드를 사용하던지... 다른 메서드로 변경 하던지...
+- https://stackoverflow.com/questions/61641977/spring-cloud-starter-openfeign-invalid-http-method-patch-executing-patch
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 궁금한점
+
+### PathVariable과 RequestParam은 어떤 차이?

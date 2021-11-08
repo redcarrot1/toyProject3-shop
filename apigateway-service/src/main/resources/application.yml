@@ -32,61 +32,33 @@ spring:
             - AuthorizationHeaderFilter
 
 
-        - id: user-service
-          uri: lb://USER-SERVICE
+        - id: item-service
+          uri: lb://ITEM-SERVICE
           predicates:
-            - Path=/user-service/login # ??? ???
-            - Method=POST
+            - Path=/item/** # ??? ???
+            - Method=POST, GET, PATCH
           filters:
             - RemoveRequestHeader=Cookie
-            - RewritePath=/user-service/(?<segment>.*), /$\{segment}
-
-        - id: user-service
-          uri: lb://USER-SERVICE
-          predicates:
-            - Path=/user-service/users # ???? ???
-            - Method=POST
-          filters:
-            - RemoveRequestHeader=Cookie
-            - RewritePath=/user-service/(?<segment>.*), /$\{segment}
-
-        - id: user-service
-          uri: lb://USER-SERVICE
-          predicates:
-            - Path=/user-service/actuator/** # actuator
-            - Method=GET,POST
-          filters:
-            - RemoveRequestHeader=Cookie
-            - RewritePath=/user-service/(?<segment>.*), /$\{segment}
-
-        - id: user-service
-          uri: lb://USER-SERVICE
-          predicates:
-            - Path=/user-service/** # ? ? ???? authorization ??
-            - Method=GET
-          filters:
-            - RemoveRequestHeader=Cookie
-            - RewritePath=/user-service/(?<segment>.*), /$\{segment}
-            #- AuthorizationHeaderFilter
-
-        - id: catalog-service
-          uri: lb://CATALOG-SERVICE
-          predicates:
-            - Path=/catalog-service/**
+            #- RewritePath=/user-service/(?<segment>.*), /$\{segment}
 
         - id: order-service
           uri: lb://ORDER-SERVICE
           predicates:
-            - Path=/order-service/actuator/**
-            - Method=GET
+            - Path=/order/** # ??? ???
+            - Method=POST, GET
           filters:
             - RemoveRequestHeader=Cookie
-            - RewritePath=/order-service/(?<segment>.*), /$\{segment}
+            #- RewritePath=/user-service/(?<segment>.*), /$\{segment}
 
-        - id: order-service
-          uri: lb://ORDER-SERVICE
+        - id: cart-service
+          uri: lb://CART-SERVICE
           predicates:
-            - Path=/order-service/**
+            - Path=/cart/** # ??? ???
+            - Method=POST, GET, DELETE, PATCH
+          filters:
+            - RemoveRequestHeader=Cookie
+            #- RewritePath=/user-service/(?<segment>.*), /$\{segment}
+
 
 management:
   endpoints:
