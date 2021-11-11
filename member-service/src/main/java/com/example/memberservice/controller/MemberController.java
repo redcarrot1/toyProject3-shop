@@ -1,5 +1,6 @@
 package com.example.memberservice.controller;
 
+import com.example.memberservice.entity.Member;
 import com.example.memberservice.form.RequestLogin;
 import com.example.memberservice.form.RequestSignup;
 import com.example.memberservice.form.ResponseLogin;
@@ -33,21 +34,14 @@ public class MemberController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<ResponseSignup> memberSignup(@RequestBody RequestSignup form){
-        ResponseSignup result = service.memberSignup(form);
+    public ResponseEntity<ResponseSignup> memberSignup(@RequestBody RequestSignup form) {
+        Member saveMember = service.memberSignup(form);
+        ResponseSignup result = new ResponseSignup(saveMember.getMemberId(), saveMember.getName());
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
     @PostMapping("/login")
     public ResponseEntity<ResponseLogin> memberLogin(@RequestBody RequestLogin form) {
-        String token = service.login(form);
-        if(token==null) {
-            //TODO 로그인 실패
-            log.warn("로그인 실패 email={}", form.getEmail());
-        }
-        HttpHeaders header = new HttpHeaders();
-        header.add("token", token);
-        return ResponseEntity.ok().headers(header)
-                .body(new ResponseLogin("admin"));
+        return service.login(form);
     }
 }

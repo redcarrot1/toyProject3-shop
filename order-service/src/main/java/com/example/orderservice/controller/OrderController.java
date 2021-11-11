@@ -1,5 +1,6 @@
 package com.example.orderservice.controller;
 
+import com.example.orderservice.entity.Order;
 import com.example.orderservice.form.RequestOrder;
 import com.example.orderservice.form.ResponseCancelOrder;
 import com.example.orderservice.form.ResponseGetOrder;
@@ -9,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -18,20 +20,24 @@ import java.util.List;
 public class OrderController {
     private final OrderService orderService;
 
-
     @PostMapping
     public ResponseOrder order(@RequestBody RequestOrder form) {
-        ResponseOrder result = orderService.save(form);
-        return result;
+        Order saveOrder = orderService.save(form);
+        return new ResponseOrder(saveOrder.getOrderId(), saveOrder.getOrderStatus());
     }
 
     @GetMapping("/orders/{memberId}")
     public List<ResponseGetOrder> getOrders(@PathVariable Long memberId) {
-        return orderService.findByMemberId(memberId);
+        List<Order> findOrders = orderService.findByMemberId(memberId);
+        List<ResponseGetOrder> result = new ArrayList<>();
+
+        findOrders.forEach(e -> result.add(new ResponseGetOrder(e.getOrderId(), e.getOrderStatus(), e.getOrderDate())));
+        return result;
     }
 
     @GetMapping("/{orderId}/cancel")
     public ResponseCancelOrder cancelOrder(@PathVariable Long orderId) {
-        return orderService.CancelByOrderId(orderId);
+        boolean result = orderService.CancelByOrderId(orderId);
+        return new ResponseCancelOrder(result);
     }
 }

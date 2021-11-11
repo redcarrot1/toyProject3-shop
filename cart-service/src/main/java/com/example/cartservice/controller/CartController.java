@@ -2,10 +2,7 @@ package com.example.cartservice.controller;
 
 import com.example.cartservice.client.form.ResponseOrder;
 import com.example.cartservice.entity.Cart;
-import com.example.cartservice.form.RequestCart;
-import com.example.cartservice.form.ResponseCart;
-import com.example.cartservice.form.ResponseDelete;
-import com.example.cartservice.form.ResponseGetCart;
+import com.example.cartservice.form.*;
 import com.example.cartservice.service.CartService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +24,7 @@ public class CartController {
 
     @GetMapping("/{memberId}")
     public List<ResponseGetCart> findCartByMemberId(@PathVariable Long memberId){
-        List<Cart> findCarts = service.findByMemberId(memberId);
+        List<Cart> findCarts = service.findCartsByMemberId(memberId);
         List<ResponseGetCart> result = new ArrayList<>();
         findCarts.forEach(e-> result.add(new ResponseGetCart(e.getCount(), e.getItemId())));
 
@@ -47,8 +44,8 @@ public class CartController {
     }
 
 
-    @GetMapping("/order/{memberId}")
-    public ResponseOrder orderItemInCart(@PathVariable Long memberId) {
-        return service.orderItemInCart(memberId);
+    @PostMapping("/order")
+    public ResponseOrder orderItemInCart(@RequestBody RequestOrderInCart form) {
+        return service.orderItemInCart(form);
     }
 }

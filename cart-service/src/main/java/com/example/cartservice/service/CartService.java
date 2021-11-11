@@ -7,16 +7,17 @@ import com.example.cartservice.client.form.RequestOrderItem;
 import com.example.cartservice.client.form.ResponseItem;
 import com.example.cartservice.client.form.ResponseOrder;
 import com.example.cartservice.entity.Cart;
+import com.example.cartservice.error.ApiException;
+import com.example.cartservice.error.ExceptionEnum;
 import com.example.cartservice.form.RequestCart;
+import com.example.cartservice.form.RequestOrderInCart;
 import com.example.cartservice.repository.CartRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @Slf4j
@@ -31,38 +32,41 @@ public class CartService {
         return cartRepository.save(cart);
     }
 
-    public List<Cart> findByMemberId(Long memberId) {
+    public List<Cart> findCartsByMemberId(Long memberId) {
         return cartRepository.findAllByMemberId(memberId);
     }
 
+    public Cart findCartByCartId(Long cartId) {
+        return cartRepository.findById(cartId)
+                .orElseThrow(() -> new ApiException(ExceptionEnum.NO_CART_BY_CARTID));
+    }
+
     public boolean delete(Long cartId) {
-        cartRepository.deleteById(cartId);
+        Cart findCart = findCartByCartId(cartId);
+        cartRepository.delete(findCart);
         return true;
     }
 
     public Cart patchCartByCartId(Long cartId, RequestCart form) {
-        Optional<Cart> findCartItem = cartRepository.findById(cartId);
-        if(findCartItem.isEmpty()){
-            //TODO 오류
-        }
-        Cart cart = findCartItem.get();
-        cart.setCount(form.getCount());
-        cart.setItemId(form.getItemId());
-        return cartRepository.save(cart);
+        Cart findCart = findCartByCartId(cartId);
+        findCart.setCount(form.getCount());
+        findCart.setItemId(form.getItemId());
+        return cartRepository.save(findCart);
     }
 
-    public ResponseOrder orderItemInCart(Long memberId) {
-        List<Cart> carts = cartRepository.findAllByMemberId(memberId);
+    public ResponseOrder orderItemInCart(RequestOrderInCart form) {
         List<RequestOrderItem> orderItems = new ArrayList<>();
-        carts.forEach(e-> {
-            ResponseItem item = itemServiceClient.itemByItemId(e.getItemId());
-            //TODO ITEM상태, 재고 등 고려
-            log.info("itemPrice={}", item.getPrice());
-            orderItems.add(new RequestOrderItem(e.getCount(), item.getPrice() * e.getCount(), e.getItemId()));
-            
-            cartRepository.deleteById(e.getCartId());
+
+        form.getOrderItems().forEach(e -> {
+            orderItems.add(new RequestOrderItem(e.getCount(), e.getOrderPrice(), e.getItemId()));
         });
 
-        return orderServiceClient.order(new RequestOrder(memberId, orderItems));
+        ResponseOrder result = orderServiceClient.order(new RequestOrder(form.getMemberId(), orderItems));
+
+        form.getOrderItems().forEach(e -> {
+            cartRepository.delete(findCartByCartId(e.getCartId()));
+        });
+
+        return result;
     }
 }

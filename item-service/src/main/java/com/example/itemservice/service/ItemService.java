@@ -1,6 +1,9 @@
 package com.example.itemservice.service;
 
+import com.example.itemservice.dto.ItemStatus;
 import com.example.itemservice.entity.Item;
+import com.example.itemservice.error.ApiException;
+import com.example.itemservice.error.ExceptionEnum;
 import com.example.itemservice.form.RequestAddItem;
 import com.example.itemservice.form.RequestEditItem;
 import com.example.itemservice.repository.ItemRepository;
@@ -9,7 +12,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -19,7 +21,7 @@ public class ItemService {
     public Long addItem(RequestAddItem form) {
         ModelMapper model = new ModelMapper();
         Item item = model.map(form, Item.class);
-        item.setItemSellStatus(1);
+        item.setItemSellStatus(ItemStatus.SELLING_ITEM.getValue());
 
         return itemRepository.save(item).getItemId();
     }
@@ -29,34 +31,23 @@ public class ItemService {
     }
 
     public Item findItemByItemId(Long itemId) {
-        Optional<Item> findItem = itemRepository.findById(itemId);
-        if (findItem.isEmpty()) {
-            //TODO 오류
-        }
-        return findItem.get();
+        return itemRepository.findById(itemId)
+                .orElseThrow(() -> new ApiException(ExceptionEnum.NO_ITEM));
     }
 
     public Item editItem(Long itemId, RequestEditItem form) {
-        Optional<Item> findItem = itemRepository.findById(itemId);
-        if (findItem.isEmpty()) {
-            //TODO 오류
-        }
-        Item item = findItem.get();
-
+        Item findItem = findItemByItemId(itemId);
         ModelMapper model = new ModelMapper();
-        model.map(form, item);
+        model.map(form, findItem);
 
-        itemRepository.save(item);
-        return item;
+        return itemRepository.save(findItem);
     }
 
     public Integer reduceItemStock(Long itemId, Integer count) {
-        Optional<Item> findItem = itemRepository.findById(itemId);
-        if (findItem.isEmpty()) {
-            //TODO 오류처리
-        }
-        Item item = findItem.get();
-        item.setStock(item.getStock() - count);
-        return itemRepository.save(item).getStock();
+        Item findItem = findItemByItemId(itemId);
+        if(findItem.getStock()<count) throw new ApiException(ExceptionEnum.NO_STOCK);
+
+        findItem.setStock(findItem.getStock() - count);
+        return itemRepository.save(findItem).getStock();
     }
 }

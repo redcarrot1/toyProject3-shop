@@ -1,19 +1,18 @@
 package com.example.orderservice.service;
 
 import com.example.orderservice.client.ItemServiceClient;
+import com.example.orderservice.dto.OrderStatus;
 import com.example.orderservice.entity.Order;
 import com.example.orderservice.entity.OrderItem;
+import com.example.orderservice.error.ApiException;
+import com.example.orderservice.error.ExceptionEnum;
 import com.example.orderservice.form.RequestOrder;
-import com.example.orderservice.form.ResponseCancelOrder;
-import com.example.orderservice.form.ResponseGetOrder;
-import com.example.orderservice.form.ResponseOrder;
 import com.example.orderservice.repository.OrderItemRepository;
 import com.example.orderservice.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -24,35 +23,34 @@ public class OrderService {
     private final OrderItemRepository orderItemRepository;
     private final ItemServiceClient itemServiceClient;
 
-    public ResponseOrder save(RequestOrder form) {
-        Order order = new Order(form.getMemberId(), 1);
-        orderRepository.save(order);
+    public Order save(RequestOrder form) {
+        //TODO order 을 먼저 저장하면 안되는데..
+        Order order = orderRepository.save(new Order(form.getMemberId(), OrderStatus.ORDER_COMPLETE.getValue()));
 
-        form.getOrderItems().forEach(e->{
-            OrderItem save = orderItemRepository.save(
-                    new OrderItem(e.getCount(), e.getOrderPrice(), e.getItemId(), order));
-            order.getOrderItems().add(save);
-
-            //TODO 재고가 없으면 오류처리
-
+        //TODO 나중에 있는 아이템의 재고가 부족하다면?
+        form.getOrderItems().forEach(e -> {
             itemServiceClient.reduceItemStock(e.getItemId(), e.getCount());
+            OrderItem orderItem = orderItemRepository.save(
+                    new OrderItem(e.getCount(), e.getOrderPrice(), e.getItemId(), order));
+            order.getOrderItems().add(orderItem);
         });
-        return new ResponseOrder(order.getOrderId(), order.getOrderStatus());
+
+        return order;
     }
 
 
-    public List<ResponseGetOrder> findByMemberId(Long memberId) {
-        List<Order> findOrder = orderRepository.findByMemberId(memberId);
-        List<ResponseGetOrder> result=new ArrayList<>();
-
-        findOrder.forEach(e->
-                result.add(new ResponseGetOrder(e.getOrderId(), e.getOrderStatus(), e.getOrderDate()))
-        );
-        return result;
+    public List<Order> findByMemberId(Long memberId) {
+        return orderRepository.findByMemberId(memberId);
     }
 
-    public ResponseCancelOrder CancelByOrderId(Long orderId) {
-        orderRepository.deleteById(orderId);
-        return new ResponseCancelOrder(true);
+    public Order findByOrderId(Long orderId) {
+        return orderRepository.findById(orderId)
+                .orElseThrow(() -> new ApiException(ExceptionEnum.NO_ORDER_BY_ORDERID));
+    }
+
+    public boolean CancelByOrderId(Long orderId) {
+        Order findOrder = findByOrderId(orderId);
+        orderRepository.delete(findOrder);
+        return true;
     }
 }

@@ -1,4 +1,4 @@
-package com.example.cartservice.client.form;
+package com.example.cartservice.form;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,7 +10,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class RequestOrder {
+public class RequestOrderInCart {
     private Long memberId;
-    List<RequestOrderItem> orderItems = new ArrayList<>();
+    List<RequestOrderItemInCart> orderItems = new ArrayList<>();
 }
